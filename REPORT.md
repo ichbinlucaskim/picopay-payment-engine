@@ -16,33 +16,33 @@ The following diagram illustrates the high-level system architecture and data fl
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         Client Applications                      │
-│                    (External Payment Services)                   │
+│                         Client Applications                     │
+│                    (External Payment Services)                  │
 └────────────────────────────┬────────────────────────────────────┘
                             │
                             │ HTTPS/TLS
                             │ X-API-Key Header
                             │
 ┌───────────────────────────▼────────────────────────────────────┐
-│                    FastAPI Application                          │
-│                    (Python 3.11, Uvicorn)                       │
+│                    FastAPI Application                         │
+│                    (Python 3.11, Uvicorn)                      │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │  POST /charge                                             │  │
+│  │  POST /charge                                            │  │
 │  │  - API Key Authentication (X-API-Key)                    │  │
-│  │  - Idempotency Key Validation (Redis Cache)             │  │
+│  │  - Idempotency Key Validation (Redis Cache)              │  │
 │  │  - Atomic Transaction Processing (PostgreSQL)            │  │
-│  │  - Metrics Instrumentation (Prometheus)                   │  │
+│  │  - Metrics Instrumentation (Prometheus)                  │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │  GET /metrics (Prometheus Metrics Endpoint)             │  │
-│  │  GET /health (Health Check Endpoint)                    │  │
+│  │  GET /metrics (Prometheus Metrics Endpoint)              │  │
+│  │  GET /health (Health Check Endpoint)                     │  │
 │  └──────────────────────────────────────────────────────────┘  │
 └───────────┬───────────────────────────┬────────────────────────┘
             │                           │
             │ Cache Lookup/Write        │ Transaction Operations
             │                           │
     ┌───────▼────────┐         ┌───────▼────────┐
-    │   Redis Cache  │         │   PostgreSQL    │
+    │   Redis Cache  │         │   PostgreSQL   │
     │   (Redis 7)    │         │   (v15)        │
     │                │         │                │
     │  - Idempotency │         │  - Users Table │
@@ -56,8 +56,8 @@ The following diagram illustrates the high-level system architecture and data fl
             │                           │
             │                           │
             │                   ┌───────▼────────┐
-            │                   │  Metrics Export │
-            └───────────────────►  Prometheus     │
+            │                   │ Metrics Export │
+            └───────────────────►  Prometheus    │
                                 │  Scraping      │
                                 └────────────────┘
 ```
@@ -251,39 +251,39 @@ Client Request with Idempotency-Key
      Cache Hit    Cache Miss
         │             │
         │             ▼
-        │     ┌──────────────────┐
+        │     ┌───────────────────┐
         │     │ Begin Transaction │
         │     │ (PostgreSQL)      │
-        │     └─────────┬──────────┘
+        │     └─────────┬─────────┘
         │               │
         │               ▼
         │     ┌──────────────────┐
         │     │ Lock Transaction │
         │     │ Row (FOR UPDATE) │
-        │     └─────────┬──────────┘
+        │     └─────────┬────────┘
         │               │
         │        ┌──────┴──────┐
         │        │             │
         │    Exists        New Transaction
         │        │             │
         │        │             ▼
-        │        │     ┌──────────────────┐
-        │        │     │ Lock User Row    │
-        │        │     │ Validate Balance │
-        │        │     │ Deduct Balance   │
-        │        │     │ Create Transaction│
+        │        │     ┌────────────────────┐
+        │        │     │ Lock User Row      │
+        │        │     │ Validate Balance   │
+        │        │     │ Deduct Balance     │
+        │        │     │ Create Transaction │
         │        │     └─────────┬──────────┘
         │        │               │
         │        │               ▼
-        │        │     ┌──────────────────┐
-        │        │     │ Commit Transaction│
+        │        │     ┌────────────────────┐
+        │        │     │ Commit Transaction │
         │        │     └─────────┬──────────┘
         │        │               │
         │        │               ▼
         │        │     ┌──────────────────┐
         │        │     │ Write to Redis   │
         │        │     │ Cache (TTL: 24h) │
-        │        │     └─────────┬──────────┘
+        │        │     └─────────┬────────┘
         │        │               │
         └────────┴───────────────┘
                      │
