@@ -22,11 +22,11 @@ The script should print the final User balance and query the database to print t
 The final output must prove that the balance was deducted only once and only one transaction record was created, verifying the successful implementation of idempotency.
 
 
-- Step 5: 핵심 기능 검증 및 증명 (Verification)
+- Step 5: Core Feature Verification and Proof (Verification)
 Run the entire project environment using docker-compose up. Then, execute the setup_test_user.py script to initialize a user with a balance of 1000. Finally, run the test_idempotency.py script and output the results. Verify that 10 concurrent requests with the same Idempotency-Key result in the balance being deducted only once, and only one successful transaction record being created.
 
 
-- Step 6: 유지보수성 및 확장성 확보 (Code Quality)
+- Step 6: Maintainability and Extensibility (Code Quality)
 Refactor the database session dependency injection in main.py and database.py to follow the FastAPI dependency injection best practices more cleanly (e.g., using yield for context management).
 
 Also, implement robust logging (using Python's standard logging module) in the /charge endpoint.
@@ -44,7 +44,7 @@ Insufficient balance failure (HTTP 400): Include the User ID and requested Amoun
 Create a simplified deployment guide in the README.md or a new DEPLOY.md file. The guide should outline the steps to deploy the FastAPI application container and the PostgreSQL database (using an external managed service like AWS RDS or a container) onto a cloud environment (e.g., using a simple service like AWS EC2 with Docker or a basic CI/CD pipeline concept).
 
 
-- Step 8
+- Step 8: Redis Caching Layer (Performance Optimization)
 Introduce a Redis caching layer to the PicoPay architecture to optimize performance.
 
 Specifically, modify the POST /charge API to check for the Idempotency-Key in Redis before querying PostgreSQL.
@@ -58,7 +58,7 @@ Cache Write: Upon a successful new charge (after the PostgreSQL transaction is c
 Update docker-compose.yml to include a redis service and update requirements.txt with the necessary Python Redis library (e.g., redis).
 
 
-- Step 9:
+- Step 9: API Key Authentication
 Implement a simple API Key authentication mechanism for the POST /charge endpoint using a FastAPI Dependency.
 
 The API Key should be passed via the X-API-Key HTTP header.
@@ -70,7 +70,7 @@ If the key is missing or invalid, return a 401 Unauthorized error.
 Update the docker-compose.yml to include the APP_API_KEY environment variable.
 
 
-- Step 10:
+- Step 10: Prometheus Metrics and Observability
 
 Integrate a basic Prometheus metrics collection library (e.g., prometheus_client) into the FastAPI application.
 
@@ -88,7 +88,7 @@ Optional
 Refactor the existing Dockerfile to use a multi-stage build process. Use a builder stage for dependencies and a smaller base image (e.g., python:3.11-slim or python:3.11-alpine) for the final application image to reduce the overall deployment size.
 
 
-- Report
+- Report.md
 
 All planned system architecture components—PostgreSQL for data consistency, Redis for performance, API Key for authentication, and Prometheus metrics for observability—have been successfully implemented and verified.
 
@@ -105,7 +105,7 @@ The report must contain the following sections:
 4. Verification Summary: Present the key findings from the concurrency test (e.g., "Balance deducted only once, 1 successful transaction record created for 10 concurrent requests") as empirical proof of the system's stability.
 
 
-- Readme
+- Readme.md
 
 Create a new, comprehensive README.md file designed for a professional technical audience (e.g., a hiring manager or tech lead). The tone must be professional, formal, and technical.
 
@@ -130,3 +130,42 @@ The README must focus on the system's architecture and the complex engineering p
 5. Getting Started: Provide clear, minimal steps to run the project (mentioning docker-compose up for development).
 
 6. Documentation Link: Reference the comprehensive DEPLOY.md and REPORT.md files for detailed setup and technical analysis.
+
+
+- For Design Guide
+
+Assume the role of a Principal Software Engineer acting as a Technical Mentor. The goal is to generate a comprehensive, formal DESIGN_GUIDE.md for an engineer who has implemented the PicoPay project but needs to deepen their architectural and conceptual understanding to a senior level.
+
+The guide must be structured into the following five sections, rigorously answering the 'Why' and 'How':
+
+1. Core Concepts Deep Dive (CS & Finance)
+Idempotency: Why is it crucial in payment systems? Explain the difference between 'Safe' methods (GET) and 'Idempotent' methods (PUT/DELETE) vs. POST.
+
+ACID Properties: Specifically detail how Atomicity (All or Nothing) and Isolation are ensured. Explain the specific role of Database Isolation Levels (e.g., Read Committed vs. Serializable) in this context.
+
+Concurrency Control: Explain the difference between Optimistic Locking (versioning) vs. Pessimistic Locking (SELECT FOR UPDATE). Why did we choose Pessimistic Locking for the balance update?
+
+2. Architecture Rationale (Architecture Decisions)
+FastAPI & Async I/O: Why FastAPI? Explain how Python's async/await handles concurrent I/O-bound requests (like DB and Redis calls) better than blocking frameworks, despite the GIL.
+
+Redis as a Lock/Cache: We use Redis for caching, but could we use it for Distributed Locking (Redlock)? Compare the current 'Optimistic Check' approach vs. a strong Distributed Lock approach.
+
+PostgreSQL as Source of Truth: Why not MongoDB? Explain the importance of Schema enforcement and Relational Integrity in financial ledgers.
+
+3. Code Implementation Analysis (Line-by-Line Logic)
+app/main.py (The Critical Path): Trace the lifecycle: Auth -> Redis Check -> DB Lock (with_for_update) -> Update -> Commit -> Cache Write.
+
+The 'Dual-Write' Problem: We write to DB first, then Redis. What happens if the DB commit succeeds but the Redis write fails? Explain how our TTL strategy mitigates this inconsistency (Eventual Consistency).
+
+app/auth.py: Explain why Dependency Injection promotes better testing and separation of concerns compared to global state or decorators.
+
+4. Infrastructure & Observability (DevOps View)
+Prometheus Metrics: Why do we track Latency Buckets (Histogram) instead of just average response time? Explain the 'Long Tail' latency problem in payment systems.
+
+Docker Networking: Briefly explain how the app container resolves the hostname db and redis internally using Docker's internal DNS.
+
+5. Design Trade-offs & Scalability (The Senior Interview)
+Python vs. Go: If we migrated to Go, which specific component would benefit most? (e.g., CPU-bound tasks vs I/O-bound).
+
+Database Scaling: If we hit 100k TPS, a single Postgres instance will fail. Discuss strategies like Database Sharding (by User ID) or Read Replicas (and why Replicas might be dangerous for balance checks due to replication lag).
+
