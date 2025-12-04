@@ -178,8 +178,8 @@ curl http://localhost:8000/metrics
 
 For comprehensive technical documentation, refer to:
 
-- **[DEPLOY.md](DEPLOY.md)**: Detailed deployment guide covering cloud deployment options, database setup, security considerations, CI/CD pipeline configuration, and troubleshooting
-- **[REPORT.md](REPORT.md)**: Complete technical architecture analysis including system diagrams, implementation details for atomicity and idempotency, observability and security rationale, and empirical verification results from concurrency testing
+- **[DEPLOY.md](doc/DEPLOY.md)**: Detailed deployment guide covering cloud deployment options, database setup, security considerations, CI/CD pipeline configuration, and troubleshooting
+- **[REPORT.md](doc/REPORT.md)**: Complete technical architecture analysis including system diagrams, implementation details for atomicity and idempotency, observability and security rationale, and empirical verification results from concurrency testing
 
 ---
 
@@ -196,15 +196,18 @@ picopay-payment-engine/
 │   ├── cache.py             # Redis caching layer implementation
 │   ├── auth.py              # API key authentication
 │   └── metrics.py           # Prometheus metrics instrumentation
+├── doc/
+│   ├── DEPLOY.md            # Deployment documentation
+│   ├── REPORT.md            # Technical architecture report
+│   ├── DESIGN_GUIDE.md      # Senior-level design and study guide
+│   └── prompt.md            # Prompt input log and specification
 ├── docker-compose.yml       # Development environment configuration
 ├── docker-compose.prod.yml  # Production environment configuration
 ├── Dockerfile               # Multi-stage container build
 ├── requirements.txt         # Python dependencies
 ├── test_idempotency.py      # Concurrency and idempotency test suite
 ├── setup_test_user.py       # Test data initialization script
-├── README.md                # This file
-├── DEPLOY.md                # Deployment documentation
-└── REPORT.md                # Technical architecture report
+└── README.md                # This file
 ```
 
 ---
