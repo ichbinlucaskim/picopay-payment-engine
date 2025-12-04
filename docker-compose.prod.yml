@@ -1,0 +1,44 @@
+version: '3.8'
+
+# Production docker-compose configuration
+# Note: This assumes you're using an external managed database (e.g., AWS RDS)
+# Update DATABASE_URL environment variable accordingly
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: picopay_app_prod
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4 --no-access-log
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      APP_API_KEY: ${APP_API_KEY}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_DB: ${REDIS_DB:-0}
+      CACHE_TTL: ${CACHE_TTL:-86400}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
